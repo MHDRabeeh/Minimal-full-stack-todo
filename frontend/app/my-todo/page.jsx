@@ -89,12 +89,14 @@ export default function TodoList() {
             {isAuthenticated && (
                 <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6">
                     {/* Header */}
-                    <header className="max-w-3xl mx-auto mb-8">
+                    <header className="max-w-5xl mx-auto mb-8">
                         <div className="flex justify-between items-center">
-                            <h1 className="text-3xl font-bold text-indigo-700">My Todo List</h1>
+                            <h1 className="text-3xl font-bold text-indigo-700">
+                                {user?.isAdmin ? "Admin Dashboard" : "My Todo List"}
+                            </h1>
                             <div className="flex items-center space-x-4">
                                 <span className="text-sm text-gray-500 hidden sm:inline">
-                                    Welcome back, {user?.username}!
+                                    {user?.isAdmin ? "Admin View" : `Welcome back, ${user?.username}!`}
                                 </span>
                                 <button 
                                     onClick={() => dispatch(logout())} 
@@ -107,7 +109,7 @@ export default function TodoList() {
                     </header>
 
                     {/* Main Content */}
-                    <main className="max-w-3xl mx-auto">
+                    <main className="max-w-5xl mx-auto">
                         {/* Add Todo Form */}
                         <div className="bg-white p-6 rounded-xl shadow-sm mb-8 border border-gray-100">
                             <form onSubmit={handleTodo} className="flex flex-col sm:flex-row gap-4">
@@ -144,8 +146,10 @@ export default function TodoList() {
                                     <div className="mx-auto w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
                                         <span className="text-indigo-500 text-2xl">☑</span>
                                     </div>
-                                    <h3 className="text-lg font-medium text-gray-700">No tasks yet</h3>
-                                    <p className="text-gray-500 mt-1">Add your first task above</p>
+                                    <h3 className="text-lg font-medium text-gray-700">No tasks found</h3>
+                                    <p className="text-gray-500 mt-1">
+                                        {user?.isAdmin ? "No tasks in the system" : "Add your first task above"}
+                                    </p>
                                 </div>
                             ) : (
                                 todos.map((todo) => (
@@ -154,6 +158,11 @@ export default function TodoList() {
                                             // Edit Form
                                             <div className="bg-white p-5 rounded-xl shadow-sm border-l-4 border-yellow-400 mb-3">
                                                 <form onSubmit={(e) => handleEditSubmit(e, todo._id)}>
+                                                    {user?.isAdmin && todo.user?.username && (
+                                                        <div className="mb-2 text-sm font-medium text-gray-600">
+                                                            Editing task by: {todo.user.username}
+                                                        </div>
+                                                    )}
                                                     <input
                                                         value={editTitle}
                                                         onChange={(e) => setEditTitle(e.target.value)}
@@ -185,66 +194,92 @@ export default function TodoList() {
                                             </div>
                                         ) : todo.status === "completed" ? (
                                             // Completed Todo Item
-                                            <div className="bg-white p-5 rounded-xl shadow-sm border-l-4 border-green-500 flex justify-between items-start">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center">
-                                                        <span className="text-green-500 mr-2 font-bold">✓</span>
-                                                        <h3 className="font-medium text-gray-500 line-through">{todo.title}</h3>
+                                            <div className="bg-white p-5 rounded-xl shadow-sm border-l-4 border-green-500">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex-1">
+                                                        {user?.isAdmin && todo.user?.username && (
+                                                            <div className="mb-1 text-sm font-medium text-gray-600">
+                                                                Task by: {todo.user.username}
+                                                            </div>
+                                                        )}
+                                                        <div className="flex items-center">
+                                                            <span className="text-green-500 mr-2 font-bold">✓</span>
+                                                            <h3 className="font-medium text-gray-500 line-through">{todo.title}</h3>
+                                                        </div>
+                                                        {todo.description && (
+                                                            <p className="text-sm text-gray-400 ml-6 mt-1 line-through">
+                                                                {todo.description}
+                                                            </p>
+                                                        )}
+                                                        <div className="ml-6 mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400">
+                                                            <span>Created: {new Date(todo.createdAt).toLocaleString()}</span>
+                                                            {todo.updatedAt !== todo.createdAt && (
+                                                                <span>Updated: {new Date(todo.updatedAt).toLocaleString()}</span>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    {todo.description && (
-                                                        <p className="text-sm text-gray-400 ml-6 mt-1 line-through">
-                                                            {todo.description}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                                <div className="flex space-x-2 ml-4">
-                                                    <button 
-                                                        onClick={() => handleComplete(todo._id)}
-                                                        className="px-3 py-1 text-xs bg-yellow-50 text-yellow-600 rounded-md hover:bg-yellow-100 transition"
-                                                    >
-                                                        Undo
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleDelete(todo._id)}
-                                                        className="px-3 py-1 text-xs bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition"
-                                                    >
-                                                        Delete
-                                                    </button>
+                                                    <div className="flex space-x-2 ml-4">
+                                                        <button 
+                                                            onClick={() => handleComplete(todo._id)}
+                                                            className="px-3 py-1 text-xs bg-yellow-50 text-yellow-600 rounded-md hover:bg-yellow-100 transition"
+                                                        >
+                                                            Undo
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleDelete(todo._id)}
+                                                            className="px-3 py-1 text-xs bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ) : (
                                             // Pending Todo Item
-                                            <div className="bg-white p-5 rounded-xl shadow-sm border-l-4 border-indigo-500 flex justify-between items-start">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center">
-                                                        <span className="text-indigo-500 mr-2 font-bold">○</span>
-                                                        <h3 className="font-medium text-gray-700">{todo.title}</h3>
+                                            <div className="bg-white p-5 rounded-xl shadow-sm border-l-4 border-indigo-500">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex-1">
+                                                        {user?.isAdmin && todo.user?.username && (
+                                                            <div className="mb-1 text-sm font-medium text-gray-600">
+                                                                Task by: {todo.user.username}
+                                                            </div>
+                                                        )}
+                                                        <div className="flex items-center">
+                                                            <span className="text-indigo-500 mr-2 font-bold">○</span>
+                                                            <h3 className="font-medium text-gray-700">{todo.title}</h3>
+                                                        </div>
+                                                        {todo.description && (
+                                                            <p className="text-sm text-gray-600 ml-6 mt-1">
+                                                                {todo.description}
+                                                            </p>
+                                                        )}
+                                                        <div className="ml-6 mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                                                            <span>Created: {new Date(todo.createdAt).toLocaleString()}</span>
+                                                            {todo.updatedAt !== todo.createdAt && (
+                                                                <span>Updated: {new Date(todo.updatedAt).toLocaleString()}</span>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    {todo.description && (
-                                                        <p className="text-sm text-gray-600 ml-6 mt-1">
-                                                            {todo.description}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                                <div className="flex space-x-2 ml-4">
-                                                    <button 
-                                                        onClick={() => handleComplete(todo._id)}
-                                                        className="px-3 py-1 text-xs bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition"
-                                                    >
-                                                        Complete
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleEditClick(todo)}
-                                                        className="px-3 py-1 text-xs bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition"
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleDelete(todo._id)}
-                                                        className="px-3 py-1 text-xs bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition"
-                                                    >
-                                                        Delete
-                                                    </button>
+                                                    <div className="flex space-x-2 ml-4">
+                                                        <button 
+                                                            onClick={() => handleComplete(todo._id)}
+                                                            className="px-3 py-1 text-xs bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition"
+                                                        >
+                                                            Complete
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleEditClick(todo)}
+                                                            className="px-3 py-1 text-xs bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition"
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleDelete(todo._id)}
+                                                            className="px-3 py-1 text-xs bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}

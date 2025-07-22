@@ -1,4 +1,5 @@
 import todoModel from "../models/todoModel.js";
+import User from "../models/userModel.js";
 
 export async function createTodo(req, res) {
   try {
@@ -50,8 +51,8 @@ export async function editTodo(req, res) {
 export async function deleteTodo(req, res) {
   try {
     const { id } = req.params;
-  console.log(id);
-  
+    console.log(id);
+
     const deletedTodo = await todoModel.findByIdAndDelete(id);
 
     if (!deletedTodo) {
@@ -69,7 +70,23 @@ export async function deleteTodo(req, res) {
 export async function readTodo(req, res) {
   try {
     const userId = req.user._id;
-    const todos = await todoModel.find({ user: userId });
+
+    // Check if user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    let todos;
+
+    if (user.isAdmin === true) {
+      // Admin can access all todos
+      todos = await todoModel.find().populate("user", "username email");
+    } else {
+      // Non-admin can access only their own todos
+      todos = await todoModel.find({ user: userId });
+    }
+
     return res.status(200).json({ todos });
   } catch (error) {
     console.error("Read todos error:", error.message);
@@ -82,7 +99,6 @@ export async function completeTodo(req, res) {
     const { id } = req.params;
     const userId = req.user._id;
 
-    
     const todo = await todoModel.findOne({ _id: id, user: userId });
 
     if (!todo) {

@@ -60,11 +60,12 @@ export async function loginUser(req, res) {
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid password" });
     }
+
     createtoken(res, user._id, user.email);
 
     return res.status(200).json({
       message: "login successful",
-      user: { _id: user._id, email: user.email, username: user.username },
+      user: { _id: user._id, email: user.email, username: user.username ,isAdmin:user.isAdmin},
     });
   } catch (error) {
     console.log(error.message);
